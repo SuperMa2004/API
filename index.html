@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenido API - Marlon Pullas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #0056b3;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #333;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      margin-right: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 200px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: #0056b3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #004494;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: #fff;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    button.delete {
+      background-color: #dc3545;
+    }
+
+    button.delete:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Crear un Nuevo Item</h1>
+  
+  <!-- Input para ingresar el nombre del item -->
+  <input type="text" id="itemName" placeholder="Nombre del Item" />
+  
+  <!-- Botón que llama a la función createItem cuando es clickeado -->
+  <button onclick="createItem()">Crear Item</button>
+
+  <h2>Items:</h2>
+  <!-- Área para listar los items -->
+  <ul id="itemList"></ul>
+
+  <script>
+    // Función asíncrona que se ejecuta al dar click en el botón
+    async function createItem() {
+      const itemName = document.getElementById('itemName').value; // Captura el valor del input
+      
+      // Verificación de que el campo no esté vacío
+      if (!itemName) {
+        alert("El nombre del item no puede estar vacío");
+        return; // Si está vacío, se sale de la función
+      }
+
+      try {
+        // Envío de la solicitud a la API
+        const response = await fetch('http://localhost:3000/api/items', {
+          method: 'POST', // Método POST para crear un nuevo item
+          headers: { 'Content-Type': 'application/json' }, // Cabeceras indicando que se envían datos JSON
+          body: JSON.stringify({ name: itemName }) // Enviar el nombre del item en formato JSON
+        });
+
+        // Verificación de la respuesta
+        if (response.ok) {
+          const newItem = await response.json(); // Obtener la respuesta de la API
+          console.log('Item creado:', newItem);
+          alert('Item creado exitosamente'); // Mostrar mensaje de éxito
+          await fetchAndDisplayItems(); // Actualizar la lista de items
+        } else {
+          const errorData = await response.json(); // Obtener los detalles del error
+          console.error('Error en la respuesta:', errorData);
+          alert('Error al crear el item.'); // Mostrar mensaje de error
+        }
+      } catch (error) {
+        // En caso de que ocurra un error en la conexión con la API
+        console.error('Error de conexión con la API:', error);
+        alert('No se pudo conectar con la API.'); // Mostrar mensaje de error
+      }
+    }
+
+    // Función para obtener y mostrar los items
+    async function fetchAndDisplayItems() {
+      try {
+        const response = await fetch('http://localhost:3000/api/items'); // Obtener todos los items
+        const items = await response.json(); // Convertir la respuesta a JSON
+        
+        // Limpiar la lista antes de mostrar los items
+        const itemList = document.getElementById('itemList');
+        itemList.innerHTML = '';
+
+        // Añadir cada item a la lista
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.name; // Mostrar el nombre del item
+
+          // Crear un botón para eliminar el item
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = 'Eliminar';
+          deleteButton.className = 'delete'; // Clase para estilos
+          deleteButton.onclick = () => deleteItem(item.id); // Asignar la función de eliminar al botón
+
+          li.appendChild(deleteButton); // Agregar el botón a la lista
+          itemList.appendChild(li); // Agregar el elemento a la lista
+        });
+      } catch (error) {
+        console.error('Error al obtener los items:', error);
+      }
+    }
+
+    // Función para eliminar un item
+    async function deleteItem(itemId) {
+      try {
+        const response = await fetch(`http://localhost:3000/api/items/${itemId}`, {
+          method: 'DELETE' // Método DELETE para eliminar el item
+        });
+
+        // Verificación de la respuesta
+        if (response.ok) {
+          console.log(`Item ${itemId} eliminado`);
+          alert('Item eliminado exitosamente'); // Mostrar mensaje de éxito
+          await fetchAndDisplayItems(); // Actualizar la lista de items
+        } else {
+          const errorData = await response.json(); // Obtener los detalles del error
+          console.error('Error en la respuesta:', errorData);
+          alert('Error al eliminar el item.'); // Mostrar mensaje de error
+        }
+      } catch (error) {
+        // En caso de que ocurra un error en la conexión con la API
+        console.error('Error de conexión con la API:', error);
+        alert('No se pudo conectar con la API.'); // Mostrar mensaje de error
+      }
+    }
+
+    // Llamar a la función para cargar los items al inicio
+    fetchAndDisplayItems();
+  </script>
+</body>
+</html>
